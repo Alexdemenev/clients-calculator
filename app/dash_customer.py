@@ -24,6 +24,7 @@ import plotly.graph_objs as go
 # Импорты для препроцессинга и расчета метрик
 from app.preprocessing import preprocessing_data
 from app.metrics import calculate_metrics
+from app.auth import validate_session, get_session_username, cleanup_expired_sessions
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
@@ -31,9 +32,57 @@ app = Dash(
     __name__, title="Калькулятор клиентов", external_stylesheets=external_stylesheets
 )
 
+# Добавляем middleware для проверки авторизации
+@app.server.before_request
+def check_authentication():
+    """Проверяет авторизацию перед каждым запросом"""
+    from flask import request, redirect, url_for
+    
+    # Очищаем истекшие сессии
+    cleanup_expired_sessions()
+    
+    # Разрешаем доступ к статическим файлам
+    if request.path.startswith('/_dash') or request.path.startswith('/assets'):
+        return None
+    
+    # Получаем токен из cookies или query параметров
+    session_token = request.cookies.get('session_token') or request.args.get('token')
+    
+    # Проверяем валидность токена
+    if not validate_session(session_token):
+        # Если токен невалиден, перенаправляем на страницу авторизации
+        return redirect('http://localhost:8501')
+    
+    return None
+
+# Функция для получения информации о пользователе
+def get_user_info():
+    """Получает информацию о текущем пользователе"""
+    from flask import request
+    session_token = request.cookies.get('session_token') or request.args.get('token')
+    if session_token and validate_session(session_token):
+        username = get_session_username(session_token)
+        return username
+    return None
+
 app.layout = html.Div(
     [
-        html.H2("Калькулятор клиентов", style={"textAlign": "center"}),
+        html.Div(
+            [
+                html.H2("Калькулятор клиентов", style={"textAlign": "center", "margin": "0"}),
+                html.Div(
+                    id="user-info",
+                    style={
+                        "position": "absolute",
+                        "top": "10px",
+                        "right": "10px",
+                        "fontSize": "14px",
+                        "color": "#666",
+                    },
+                ),
+            ],
+            style={"position": "relative", "marginBottom": "20px"},
+        ),
         dcc.Upload(
             id="upload-data",
             children=html.Div(
@@ -654,5 +703,19 @@ def create_plots(n_clicks, metrics_data, button_id, months_forward):
         )
 
 
+# Callback для отображения информации о пользователе
+@app.callback(
+    Output("user-info", "children"),
+    Input("output-data-upload", "children"),  # Триггер при загрузке страницы
+    prevent_initial_call=False,
+)
+def update_user_info(_):
+    """Обновляет информацию о пользователе"""
+    username = get_user_info()
+    if username:
+        return html.Div(f"👤 {username}")
+    return ""
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=8050)
