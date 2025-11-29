@@ -32,44 +32,50 @@ app = Dash(
     __name__, title="Калькулятор клиентов", external_stylesheets=external_stylesheets
 )
 
+
 # Добавляем middleware для проверки авторизации
 @app.server.before_request
 def check_authentication():
     """Проверяет авторизацию перед каждым запросом"""
     from flask import request, redirect, url_for
-    
+
     # Очищаем истекшие сессии
     cleanup_expired_sessions()
-    
+
     # Разрешаем доступ к статическим файлам
-    if request.path.startswith('/_dash') or request.path.startswith('/assets'):
+    if request.path.startswith("/_dash") or request.path.startswith("/assets"):
         return None
-    
+
     # Получаем токен из cookies или query параметров
-    session_token = request.cookies.get('session_token') or request.args.get('token')
-    
+    session_token = request.cookies.get("session_token") or request.args.get("token")
+
     # Проверяем валидность токена
     if not validate_session(session_token):
         # Если токен невалиден, перенаправляем на страницу авторизации
-        return redirect('http://localhost:8501')
-    
+        return redirect("http://localhost:8501")
+
     return None
+
 
 # Функция для получения информации о пользователе
 def get_user_info():
     """Получает информацию о текущем пользователе"""
     from flask import request
-    session_token = request.cookies.get('session_token') or request.args.get('token')
+
+    session_token = request.cookies.get("session_token") or request.args.get("token")
     if session_token and validate_session(session_token):
         username = get_session_username(session_token)
         return username
     return None
 
+
 app.layout = html.Div(
     [
         html.Div(
             [
-                html.H2("Калькулятор клиентов", style={"textAlign": "center", "margin": "0"}),
+                html.H2(
+                    "Калькулятор клиентов", style={"textAlign": "center", "margin": "0"}
+                ),
                 html.Div(
                     id="user-info",
                     style={
