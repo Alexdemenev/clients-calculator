@@ -1,5 +1,5 @@
 dash==3.1.0
-dash-ag-grid==0.9.1
+dash-ag-grid==32.3.2
 streamlit==1.41.1
 pandas==2.2.3
 numpy==1.26.4
