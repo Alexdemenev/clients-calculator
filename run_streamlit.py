@@ -13,6 +13,6 @@ if __name__ == "__main__":
             "streamlit",
             "run",
             "app/streamlit_auth.py",
-            "--server.port=8501",
+            "--server.port=8551",
         ]
     )
