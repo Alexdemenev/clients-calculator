@@ -3,8 +3,12 @@ Streamlit приложение для авторизации и перенапр
 """
 
 import streamlit as st
+import os
 import requests
 from app.auth import authenticate, create_session, cleanup_expired_sessions
+
+# URL Dash приложения из переменных окружения или по умолчанию
+DASH_URL = os.getenv("DASH_URL", "http://localhost:8050")
 
 # Настройка страницы
 st.set_page_config(
@@ -30,7 +34,7 @@ if st.session_state.authenticated and st.session_state.session_token:
     st.markdown("---")
 
     # Ссылка на Dash приложение с токеном
-    dash_url = f"http://localhost:8050?token={st.session_state.session_token}"
+    dash_url = f"{DASH_URL}?token={st.session_state.session_token}"
 
     st.markdown(
         f"""

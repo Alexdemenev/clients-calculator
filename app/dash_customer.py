@@ -16,6 +16,7 @@ import dash_ag_grid as dag
 import base64
 import datetime
 import io
+import os
 
 import pandas as pd
 import numpy as np
@@ -52,7 +53,8 @@ def check_authentication():
     # Проверяем валидность токена
     if not validate_session(session_token):
         # Если токен невалиден, перенаправляем на страницу авторизации
-        return redirect("http://localhost:8501")
+        streamlit_url = os.getenv("STREAMLIT_URL", "http://localhost:8501")
+        return redirect(streamlit_url)
 
     return None
 
