@@ -1,0 +1,44 @@
+version: '3.8'
+
+# Пример конфигурации для продакшена
+# Используйте переменные окружения для настройки URL
+# docker-compose -f docker-compose.prod.yaml up
+
+services:
+  auth:
+    build: .
+    ports:
+      - "${AUTH_PORT:-8501}:8501"
+    environment:
+      # Внешний URL для Dash (должен быть доступен из браузера)
+      - DASH_URL=${DASH_URL:-http://localhost:8050}
+      # Внешний URL для Streamlit (для редиректов)
+      - STREAMLIT_URL=${STREAMLIT_URL:-http://localhost:8501}
+    volumes:
+      - ./app/sessions.json:/app/app/sessions.json
+    command: streamlit run streamlit_auth.py --server.port=8501 --server.address=0.0.0.0
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  dashboard:
+    build: .
+    ports:
+      - "${DASH_PORT:-8050}:8050"
+    depends_on:
+      - auth
+    environment:
+      - DASH_DEBUG=false
+      # Внешний URL для Streamlit (для редиректов при неавторизованном доступе)
+      - STREAMLIT_URL=${STREAMLIT_URL:-http://localhost:8501}
+    volumes:
+      - ./app/sessions.json:/app/app/sessions.json
+    command: python -c "from dash_customer import app; app.run(host='0.0.0.0', port=8050, debug=False)"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+

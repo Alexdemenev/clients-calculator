@@ -5,6 +5,7 @@ Streamlit приложение для авторизации и перенапр
 import streamlit as st
 import os
 import requests
+
 from app.auth import authenticate, create_session, cleanup_expired_sessions
 
 # URL Dash приложения из переменных окружения или по умолчанию
